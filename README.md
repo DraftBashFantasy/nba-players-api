@@ -1,2 +1,0 @@
-To run the application, you need to add an environment variable called MONGODB_URL, which is the database credentials string
-Then, create a virtual environment, enter it, pip install the dependencies, and then run "uvicorn src/main:app".
