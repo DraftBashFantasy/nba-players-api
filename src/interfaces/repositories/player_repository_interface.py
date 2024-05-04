@@ -18,3 +18,7 @@ class IPlayerRepository(ABC):
     @abstractmethod
     def upsert_many(self, player: list[PlayerEntity]) -> None:
         pass
+    
+    @abstractmethod
+    def get_season_totals(self, season: int) -> dict:
+        pass

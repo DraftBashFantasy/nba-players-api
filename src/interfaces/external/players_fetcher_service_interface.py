@@ -8,5 +8,5 @@ class IPlayersFetcher(ABC):
     """
 
     @abstractmethod
-    def fetch_new_player_data(self) -> list[PlayerEntity]:
+    def execute(self) -> list[PlayerEntity]:
         pass

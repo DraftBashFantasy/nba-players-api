@@ -14,22 +14,6 @@ class GamelogsFetcher(IGamelogsFetcher):
     :param execute: Fetches NBA player gamelogs according to the given game_ids.
     """
 
-    def __init__(self):
-        # These headers are needed to access the NBA API
-        self._nba_api_headers = {
-            "Connection": "keep-alive",
-            "Accept": "application/json, text/plain, */*",
-            "x-nba-stats-token": "true",
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 \
-            (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36",
-            "x-nba-stats-origin": "stats",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-Mode": "cors",
-            "Referer": "https://stats.nba.com/",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "en-US,en;q=0.9",
-        }
-
     def get_recent_game_ids(self) -> list[int]:
         """
         Gets the game_ids over the last 3 days

@@ -27,7 +27,7 @@ class PlayersSeasonProjectionsFetcher:
         # Scrape the player season projections from fantasypros.com
         URL = "https://www.fantasypros.com/nba/projections/overall.php"
         player_season_projections_response = requests.get(URL)
-        soup = BeautifulSoup(player_season_projections_response.text, "html")
+        soup = BeautifulSoup(player_season_projections_response.text, "html.parser")
         table_body = soup.find(class_="mobile-table").find("tbody")
         player_projections_rows = table_body.find_all("tr")
 
@@ -35,16 +35,16 @@ class PlayersSeasonProjectionsFetcher:
         players_season_projections = []
         for player_projections_row in player_projections_rows:
             values = player_projections_row.find_all("td")
-            fantasypros_player_id = values[0].find("a").get("fp-player-id")
+            fantasypros_player_id = values[0].find("a").get("class")[2].split("-")[2]
             points_league_ranking = points_rankings.get(fantasypros_player_id, None)
             category_league_ranking = category_rankings.get(fantasypros_player_id, None)
             players_season_projections.append(
                 {
+                    "pointsLeagueRanking": points_league_ranking,
+                    "categoryLeagueRanking": category_league_ranking,
                     "firstName": values[0].find("a").text.split(" ")[0],
                     "lastName": values[0].find("a").text.split(" ")[1],
                     "teamAbbreviation": values[0].find("small").text[1:4],
-                    "pointsLeagueRanking": points_league_ranking,
-                    "categoryLeagueRanking": category_league_ranking,
                     "gamesPlayed": int(values[9].text.replace(",", "")),
                     "minutes": float(values[10].text.replace(",", "")),
                     "fieldGoalPercentage": float(values[6].text.replace(",", "")),
@@ -78,7 +78,7 @@ class PlayersSeasonProjectionsFetcher:
         try:
             URL = "https://www.fantasypros.com/nba/rankings/overall.php"
             html_response = requests.get(URL)
-            soup = BeautifulSoup(html_response.text, "html")
+            soup = BeautifulSoup(html_response.text, "html.parser")
             table_rows = soup.find(class_="mobile-table").find("tbody").find_all("tr")
             for row in table_rows:
                 values = row.find_all("td")
@@ -106,9 +106,9 @@ class PlayersSeasonProjectionsFetcher:
         # we can include it in the season projects.
         rankings = {}
         try:
-            URL = "https://www.fantasypros.com/nba/rankings/overall.php"
+            URL = "https://www.fantasypros.com/nba/rankings/overall-points-cbs.php"
             html_response = requests.get(URL)
-            soup = BeautifulSoup(html_response.text, "html")
+            soup = BeautifulSoup(html_response.text, "html.parser")
             table_rows = soup.find(class_="mobile-table").find("tbody").find_all("tr")
             for row in table_rows:
                 values = row.find_all("td")

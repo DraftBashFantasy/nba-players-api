@@ -17,7 +17,7 @@ players_router = APIRouter()
 # Dependencies for dependency injection
 player_repository = PlayerRepository()
 team_repository = TeamRepository()
-players_fetcher = PlayersFetcher(team_repository)
+players_fetcher = PlayersFetcher()
 projection_repository = PlayerRepository()
 gamelog_repository = GamelogRepository()
 scheduled_matchup_repository = ScheduledMatchupRepository()
@@ -28,15 +28,12 @@ player_weekly_projections_forecaster_service = PlayerWeeklyProjectionsForecaster
 
 @players_router.post("/api/v1/players")
 async def upsert_players():
-    try:
-        PlayersUpserterUseCase(player_repository, players_fetcher).execute()
-        return Response(status_code=200)
-    except Exception as e:
-        return Response(status_code=500, content=str(e))
-
+    PlayersUpserterUseCase(player_repository, players_fetcher).execute()
+    return Response(status_code=200)
 
 @players_router.get("/api/v1/players")
 async def get_players():
+    print(player_repository.get_season_totals(2023))
     return [dict(player) for player in player_repository.get_all()]
 
 

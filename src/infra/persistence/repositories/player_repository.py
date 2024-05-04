@@ -1,5 +1,6 @@
 from datetime import datetime
-from src.infra.persistence.database import players_collection
+from src.domain.value_objects import PlayerSeasonTotals
+from src.infra.persistence.database import players_collection, gamelogs_collection
 from src.domain.entities import PlayerEntity, ProjectionEntity
 from src.interfaces.repositories import IPlayerRepository
 from pymongo import UpdateOne
@@ -76,7 +77,6 @@ class PlayerRepository(IPlayerRepository):
         # Execute bulk write operations
         self._players_collection.bulk_write(bulk_operations)
 
-
     def upsert_many(self, players: list[PlayerEntity]) -> None:
         """
         Bulk upsert NBA players.
@@ -107,3 +107,41 @@ class PlayerRepository(IPlayerRepository):
 
         # Execute bulk write operations
         self._players_collection.bulk_write(bulk_operations)
+
+    def get_season_totals(self, season: int) -> dict[str, PlayerSeasonTotals]:
+        """
+        Get the season totals for all players in the database.
+        
+        :param season int: The season for which to retrieve player totals.
+        :return: A dictionary mapping player IDs to their season totals.
+        :rtype: dict[str, PlayerSeasonTotals]
+        """
+
+        players_totals: list[PlayerSeasonTotals] = gamelogs_collection.aggregate(
+            [
+                # Filter gamelogs for the target season
+                {"$match": {"season": season}},
+                {"$match": {"isActive": True}},
+                # Group gamelogs by playerId and calculate totals
+                {
+                    "$group": {
+                        "_id": "$playerId",
+                        "points": {"$sum": "$points"},
+                        "reboundsTotal": {"$sum": "$reboundsTotal"},
+                        "assists": {"$sum": "$assists"},
+                        "steals": {"$sum": "$steals"},
+                        "blocks": {"$sum": "$blocks"},
+                        "turnovers": {"$sum": "$turnovers"},
+                        "fieldGoalsAttempted": {"$sum": "$fieldGoalsAttempted"},
+                        "fieldGoalsMade": {"$sum": "$fieldGoalsMade"},
+                        "threesMade": {"$sum": "$threesMade"},
+                        "freeThrowsAttempted": {"$sum": "$freeThrowsAttempted"},
+                        "freeThrowsMade": {"$sum": "$freeThrowsMade"},
+                        "minutes": {"$sum": "$minutes"},
+                        "gamesPlayed": {"$sum": 1},
+                    }
+                },
+            ]
+        )
+        
+        return {player_totals.pop("_id"): player_totals for player_totals in players_totals}
