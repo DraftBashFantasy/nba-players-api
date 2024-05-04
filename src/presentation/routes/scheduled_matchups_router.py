@@ -14,7 +14,7 @@ weekly_matchups_fetcher = ScheduledMatchupsFetcherService()
 async def get_scheduled_matchups(is_current_week: str = Query(None)):
     get_scheduled_matchups_use_case = GetScheduledMatchupsUseCase(scheduled_matchup_repository)
     scheduled_matchups = []
-    if is_current_week:
+    if bool(is_current_week.capitalize()):
         scheduled_matchups: list[ScheduledMatchupEntity] = get_scheduled_matchups_use_case.get_current_week()
     else:
         scheduled_matchups: list[ScheduledMatchupEntity] = get_scheduled_matchups_use_case.get_all()
@@ -23,6 +23,9 @@ async def get_scheduled_matchups(is_current_week: str = Query(None)):
 
 @scheduled_matchups_router.post("/api/v1/matchups/schedules")
 async def upsert_scheduled_matchups():
-    scheduled_matchups_upserter_use_case = ScheduledMatchupsUpserterUseCase(scheduled_matchup_repository, weekly_matchups_fetcher)
-    scheduled_matchups_upserter_use_case.execute()
-    return Response(status_code=200)
+    try:
+        scheduled_matchups_upserter_use_case = ScheduledMatchupsUpserterUseCase(scheduled_matchup_repository, weekly_matchups_fetcher)
+        scheduled_matchups_upserter_use_case.execute()
+        return Response(status_code=200)
+    except Exception as e:
+        return Response(status_code=500, content=str(e))
