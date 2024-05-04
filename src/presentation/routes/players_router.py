@@ -28,8 +28,11 @@ player_weekly_projections_forecaster_service = PlayerWeeklyProjectionsForecaster
 
 @players_router.post("/api/v1/players")
 async def upsert_players():
-    PlayersUpserterUseCase(player_repository, players_fetcher).execute()
-    return Response(status_code=200)
+    try:
+        PlayersUpserterUseCase(player_repository, players_fetcher).execute()
+        return Response(status_code=200)
+    except Exception as e:
+        return Response(status_code=500, content=str(e))
 
 
 @players_router.get("/api/v1/players")
