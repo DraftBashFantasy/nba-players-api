@@ -32,31 +32,33 @@ class GamelogsFetcher(IGamelogsFetcher):
 
     def get_recent_game_ids(self) -> list[int]:
         """
-        Gets the game_ids over the last 10 days
+        Gets the game_ids over the last 3 days
 
-        :return: A list of game_ids for the last 10 days.
+        :return: A list of game_ids for the last 3 days.
         :rtype: list[int]
         """
 
-        # Get the current date and the date 10 days ago
+        # Get the current date and the date 3 days ago
         current_date = datetime.utcnow().strftime("%Y-%m-%d")
-        date_ten_days_ago = (datetime.utcnow() - timedelta(days=10)).strftime("%Y-%m-%d")
+        date_three_days_ago = (datetime.utcnow() - timedelta(days=3)).strftime("%Y-%m-%d")
 
-        current_season = datetime.utcnow().year
+        current_season = datetime.utcnow().year - 1
         if datetime.now().month >= 10:
-            current_season = current_season + 1
+            current_season = current_season
 
-        # Get the current week's schedule
-        game_ids_endpoint = ("https://stats.nba.com/stats/leaguegamefinder?LeagueID=00&"
-                             +f"Season={current_season-1}-{str(current_season)[2:]}")
-        game_ids_response = requests.get(game_ids_endpoint, headers=self._nba_api_headers)
+        recent_games = requests.get(
+            "https://data.nba.com/data/10s/v2015/json/mobile_teams/nba/"
+            + f"{current_season}/league/00_full_schedule.json"
+        ).json()
 
         game_ids = []
-        for game in game_ids_response.json()["resultSets"][0]["rowSet"]:
-            if game[5] >= date_ten_days_ago and game[5] < current_date:
-                game_ids.append(game[4])
+        for recent_game in recent_games["lscd"]:
+            games = recent_game["mscd"]["g"]
+            for game in games:
+                if game["gdte"] >= date_three_days_ago and game["gdte"] < current_date:
+                    game_ids.append(game["gid"])
 
-        return list(set(game_ids))
+        return game_ids
 
     def get_season_game_ids(self, season: int) -> list[int]:
         """
@@ -68,12 +70,16 @@ class GamelogsFetcher(IGamelogsFetcher):
         """
 
         # Get the game_ids for the given season
-        game_ids_endpoint = (
-            "https://stats.nba.com/stats/leaguegamefinder?LeagueID=00&Season="
-            + f"{season}-{str(season+1)[2:]}&SeasonType=Regular Season"
-        )
-        game_ids_response = requests.get(game_ids_endpoint, headers=self._nba_api_headers)
-        game_ids = list(set([game[4] for game in game_ids_response.json()["resultSets"][0]["rowSet"]]))
+        recent_games = requests.get(
+            "https://data.nba.com/data/10s/v2015/json/mobile_teams/nba/"
+            + f"{current_season}/league/00_full_schedule.json"
+        ).json()["lscd"]
+
+        game_ids = []
+        for recent_game in recent_games:
+            games = recent_game["mscd"]["g"]
+            for game in games:
+                game_ids.append(game["gid"])
         return game_ids
 
     def get_new_gamelogs(self, game_ids: list[int]) -> list[GamelogEntity]:
