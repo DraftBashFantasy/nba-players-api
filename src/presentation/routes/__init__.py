@@ -1,0 +1,4 @@
+from src.presentation.routes.players_router import players_router
+from src.presentation.routes.teams_router import teams_router
+from src.presentation.routes.scheduled_matchups_router import scheduled_matchups_router
+from src.presentation.routes.gamelogs_router import gamelogs_router
