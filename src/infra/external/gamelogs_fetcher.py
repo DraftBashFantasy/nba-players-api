@@ -56,7 +56,7 @@ class GamelogsFetcher(IGamelogsFetcher):
         # Get the game_ids for the given season
         recent_games = requests.get(
             "https://data.nba.com/data/10s/v2015/json/mobile_teams/nba/"
-            + f"{current_season}/league/00_full_schedule.json"
+            + f"{season}/league/00_full_schedule.json"
         ).json()["lscd"]
 
         game_ids = []
