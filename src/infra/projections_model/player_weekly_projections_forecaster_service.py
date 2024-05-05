@@ -23,7 +23,9 @@ class PlayerWeeklyProjectionsForecasterService(IPlayerWeeklyProjectionsForecaste
         :rtype: dict
         """
 
-        gamelogs_df = pd.json_normalize([dict(gamelog) for gamelog in gamelogs])[
+        active_players: list[PlayerEntity] = [player for player in players if player.team is not None]
+
+        gamelogs_df: pd.DataFrame = pd.json_normalize([dict(gamelog) for gamelog in gamelogs])[
             [
                 "playerId",
                 "dateUTC",
@@ -52,7 +54,7 @@ class PlayerWeeklyProjectionsForecasterService(IPlayerWeeklyProjectionsForecaste
         current_datetime = pd.to_datetime(datetime.utcnow()).tz_localize("UTC")
 
         player_projections: list[ProjectionEntity] = []
-        for player in players:
+        for player in active_players:
             player_scheduled_matchups: list[ScheduledMatchupEntity] = []
             for matchup in scheduled_matchups:
                 matchup_datetime = pd.to_datetime(matchup.dateTimeUTC)
@@ -72,7 +74,7 @@ class PlayerWeeklyProjectionsForecasterService(IPlayerWeeklyProjectionsForecaste
                 is_starter: bool = player.depthChartOrder == 1
                 is_injured: bool = player.injuryStatus is not None
                 player_game_projection: ProjectionEntity = None
-                
+
                 if not is_injured:
                     player_averages: pd.Series = player_averages_df.loc[player.playerId]
                     defense_ratings: pd.Series = defense_df.loc[(opposing_team.teamId, player.position, is_starter)]
@@ -121,56 +123,32 @@ class PlayerWeeklyProjectionsForecasterService(IPlayerWeeklyProjectionsForecaste
 
     def _calculate_projections(self, player_averages: pd.Series, defense_ratings: pd.Series) -> dict[float]:
         field_goals_attempted: float = (
-            -0.5399293446821005
-            + 0.9512883582352494 * player_averages["fieldGoalsAttempted"]
-            + 2.7697777773732595 * defense_ratings["fieldGoalsAttempted"]
+            -0.53993
+            + 0.95129 * player_averages["fieldGoalsAttempted"]
+            + 2.76978 * defense_ratings["fieldGoalsAttempted"]
         )
         field_goals_made: float = (
-            -0.34277542510445436
-            + 0.9278648975480978 * player_averages["fieldGoalsMade"]
-            + 3.7515580612979442 * defense_ratings["fieldGoalsMade"]
+            -0.34278 + 0.92786 * player_averages["fieldGoalsMade"] + 3.75156 * defense_ratings["fieldGoalsMade"]
         )
         threes_made: float = (
-            -0.02234308326721135
-            + 0.8605497746561479 * player_averages["threesMade"]
-            + 3.355423987344837 * defense_ratings["threesMade"]
+            -0.02234 + 0.86055 * player_averages["threesMade"] + 3.35542 * defense_ratings["threesMade"]
         )
         free_throws_attempted: float = (
-            -0.0744734268941254
-            + 0.8779475061501717 * player_averages["freeThrowsAttempted"]
-            + 3.077684565187366 * defense_ratings["freeThrowsAttempted"]
+            -0.07447
+            + 0.87795 * player_averages["freeThrowsAttempted"]
+            + 3.07768 * defense_ratings["freeThrowsAttempted"]
         )
         free_throws_made: float = (
-            -0.04098231329520163
-            + 0.8689237605325177 * player_averages["freeThrowsMade"]
-            + 3.0658904428326874 * defense_ratings["freeThrowsMade"]
+            -0.04098 + 0.86892 * player_averages["freeThrowsMade"] + 3.06589 * defense_ratings["freeThrowsMade"]
         )
-        points: float = (
-            -0.7040708106022162
-            + 0.9306741877375753 * player_averages["points"]
-            + 3.135432465321035 * defense_ratings["points"]
-        )
-        assists: float = (
-            0.0006934453202154245
-            + 0.9337122184856438 * player_averages["assists"]
-            + 1.6878332189290661 * defense_ratings["assists"]
-        )
+        points: float = -0.70407 + 0.93067 * player_averages["points"] + 3.13543 * defense_ratings["points"]
+        assists: float = 0.00069 + 0.93371 * player_averages["assists"] + 1.68783 * defense_ratings["assists"]
         rebounds_total: float = (
-            0.049891203483493296
-            + 0.9214907754967216 * player_averages["reboundsTotal"]
-            + 1.3766511169855438 * defense_ratings["reboundsTotal"]
+            0.04989 + 0.92149 * player_averages["reboundsTotal"] + 1.37665 * defense_ratings["reboundsTotal"]
         )
-        turnovers: float = (
-            -0.016220647090859353
-            + 0.8530253404824292 * player_averages["turnovers"]
-            + 3.2213452438304087 * defense_ratings["turnovers"]
-        )
-        steals: float = 0.16661831580729847 + 0.8205168632476174 * player_averages["steals"]
-        blocks: float = (
-            0.025653977552719753
-            + 0.7558895921506441 * player_averages["blocks"]
-            + 3.3943248721866603 * defense_ratings["blocks"]
-        )
+        turnovers: float = -0.01622 + 0.85303 * player_averages["turnovers"] + 3.22135 * defense_ratings["turnovers"]
+        steals: float = 0.16662 + 0.82052 * player_averages["steals"]
+        blocks: float = 0.02565 + 0.75589 * player_averages["blocks"] + 3.39432 * defense_ratings["blocks"]
         return {
             "fieldGoalsAttempted": field_goals_attempted,
             "fieldGoalsMade": field_goals_made,
@@ -215,7 +193,9 @@ class PlayerWeeklyProjectionsForecasterService(IPlayerWeeklyProjectionsForecaste
 
         for player in players:
 
-            player_gamelogs_df: pd.DataFrame = gamelogs_df[gamelogs_df["playerId"] == player.playerId]
+            player_gamelogs_df: pd.DataFrame = gamelogs_df[
+                (gamelogs_df["playerId"] == player.playerId) & (gamelogs_df["playerTeamId"] == player.team.teamId)
+            ]
 
             stats = {
                 "fieldGoalsAttempted": 0,

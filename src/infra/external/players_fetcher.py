@@ -1,8 +1,7 @@
 import nba_api.stats
 import requests
 from datetime import datetime
-from nba_api.stats.static import teams
-from nba_api.stats.endpoints import commonteamroster
+from nba_api.stats.static import teams as teams_fetcher, players as nba_api_players_fetcher
 from src.domain.entities import PlayerEntity, TeamEntity
 from src.infra.external import PlayersSeasonProjectionsFetcher
 from src.interfaces.repositories import ITeamRepository
@@ -25,22 +24,13 @@ class PlayersFetcher(IPlayersFetcher):
         :rtype: list[PlayerEntity]
         """
 
-        nba_api_players: list[dict] = []
-        for team in teams.get_teams():
-            for nba_api_player in commonteamroster.CommonTeamRoster(team_id=team["id"]).get_dict()["resultSets"][0]["rowSet"]:
-                nba_api_players.append(
-                    {
-                        "playerId": nba_api_player[-2],
-                        "firstName": nba_api_player[3].split(" ")[0],
-                        "lastName": nba_api_player[3].split(" ")[1],
-                        "team": {
-                            "teamId": str(team["id"]),
-                            "name": team["nickname"],
-                            "abbreviation": team["abbreviation"],
-                            "location": team["city"]
-                        }
-                    }
-                )
+        teams_dict: dict = {}
+        for team in teams_fetcher.get_teams():
+            teams_dict[team["abbreviation"]] = TeamEntity(
+                teamId=str(team["id"]), location=team["city"], name=team["nickname"], abbreviation=team["abbreviation"]
+            )
+            
+        nba_api_players: list[dict] = nba_api_players_fetcher.get_players()
 
         # Get the NBA players from the Sleeper API
         sleeper_api_players: list[dict] = requests.get(url="https://api.sleeper.app/v1/players/nba")
@@ -64,18 +54,14 @@ class PlayersFetcher(IPlayersFetcher):
                 sleeper_api_player = None
                 drop_count = None  # Number of times the player has been dropped in sleeper during the last 24 hours.
                 add_count = None  # Number of times the player has been added in sleeper during the last 24 hours.
-                first_name: str = nba_api_player["firstName"]
-                last_name: str = nba_api_player["lastName"]
-                team: TeamEntity = TeamEntity(**nba_api_player["team"])
+                first_name: str = nba_api_player["first_name"]
+                last_name: str = nba_api_player["last_name"]
+                team: TeamEntity = None
                 season_projections = None
 
                 # Get the player's information from Sleeper's API
                 for sleeper_player_id, sleeper_player in sleeper_api_players.json().items():
-                    if (
-                        first_name == sleeper_player["first_name"]
-                        and last_name == sleeper_player["last_name"]
-                        and dict(team)["abbreviation"] == sleeper_player["team"]
-                    ):
+                    if first_name == sleeper_player["first_name"] and last_name == sleeper_player["last_name"]:
                         # Get the number of times the player has been added and dropped in Sleeper over the last 24 hours.
                         for player in player_drops_list:
                             if player["player_id"] == sleeper_player_id:
@@ -87,6 +73,7 @@ class PlayersFetcher(IPlayersFetcher):
                                 break
 
                         # Returns player information from the sleeper API
+                        team = teams_dict.get(sleeper_player["team"])
                         sleeper_api_player = sleeper_player
                         break
 
@@ -96,11 +83,8 @@ class PlayersFetcher(IPlayersFetcher):
 
                 # Get the player's rankings for points and category leagues
                 for projections in players_season_projections:
-                    if (
-                        first_name == projections["firstName"]
-                        and last_name == projections["lastName"]
-                        and dict(team)["abbreviation"] == projections["teamAbbreviation"]
-                    ):
+                    if first_name == projections["firstName"] and last_name == projections["lastName"]:
+                        
                         # Set the season projections for the player
                         season_projections = PlayerSeasonProjections(
                             pointsLeagueRanking=projections["pointsLeagueRanking"],
@@ -121,7 +105,7 @@ class PlayersFetcher(IPlayersFetcher):
 
                 # Combine all the player's information into a PlayerEntity object.
                 player_entity = PlayerEntity(
-                    playerId=str(nba_api_player["playerId"]),
+                    playerId=str(nba_api_player["id"]),
                     rotowireId=str(sleeper_api_player["rotowire_id"]),  # Fantasy news provider.
                     firstName=first_name,
                     lastName=last_name,

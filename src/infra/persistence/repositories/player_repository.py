@@ -119,10 +119,8 @@ class PlayerRepository(IPlayerRepository):
 
         players_totals: list[PlayerSeasonTotals] = gamelogs_collection.aggregate(
             [
-                # Filter gamelogs for the target season
                 {"$match": {"season": season}},
                 {"$match": {"isActive": True}},
-                # Group gamelogs by playerId and calculate totals
                 {
                     "$group": {
                         "_id": "$playerId",

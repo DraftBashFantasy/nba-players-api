@@ -59,7 +59,7 @@ class GamelogsFetcher(IGamelogsFetcher):
             + f"{season}/league/00_full_schedule.json"
         ).json()["lscd"]
 
-        game_ids = []
+        game_ids: list[int] = []
         for recent_game in recent_games:
             games = recent_game["mscd"]["g"]
             for game in games:

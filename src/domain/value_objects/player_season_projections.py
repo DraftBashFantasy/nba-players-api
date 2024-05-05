@@ -2,7 +2,6 @@ from typing import Optional
 from pydantic import BaseModel
 
 class PlayerSeasonProjections(BaseModel):
-    """ Represents the season projections for a player. """
     
     pointsLeagueRanking: Optional[int]
     categoryLeagueRanking: Optional[int]
