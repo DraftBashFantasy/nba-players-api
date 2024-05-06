@@ -1,11 +1,8 @@
-import nba_api.stats
 import requests
-from datetime import datetime
 from nba_api.stats.static import teams as teams_fetcher, players as nba_api_players_fetcher
 from src.domain.entities import PlayerEntity, TeamEntity
 from src.infra.external import PlayersSeasonProjectionsFetcher
-from src.interfaces.repositories import ITeamRepository
-from src.domain.value_objects import PlayerSeasonProjections, PlayerSeasonTotals
+from src.domain.value_objects import PlayerSeasonProjections
 from src.interfaces.external import IPlayersFetcher
 
 
