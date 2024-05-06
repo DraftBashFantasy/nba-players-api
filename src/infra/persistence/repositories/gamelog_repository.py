@@ -21,7 +21,9 @@ class GamelogRepository(IGamelogRepository):
         bulk_operations = []
         for gamelog in gamelogs:
             bulk_operations.append(
-                UpdateOne({"playerId": gamelog.playerId, "gameId": gamelog.gameId}, {"$set": dict(gamelog)}, upsert=True)
+                UpdateOne(
+                    {"playerId": gamelog.playerId, "gameId": gamelog.gameId}, {"$set": dict(gamelog)}, upsert=True
+                )
             )
         self._gamelogs_collection.bulk_write(bulk_operations)
 
@@ -33,3 +35,17 @@ class GamelogRepository(IGamelogRepository):
         """
 
         return [GamelogEntity(**gamelog) for gamelog in self._gamelogs_collection.find()]
+
+    def get_all_by_player_id_and_season(self, player_id: str, season: int) -> list[GamelogEntity]:
+        """
+        Get all gamelogs of a given season from the database that belong to a certain player.
+
+        :param player_id str: The ID of the player for which to retrieve gamelogs.
+        :param season int: The season for which to retrieve gamelogs.
+        :return list[GamelogEntity]: A list of gamelogs that match the criteria.
+        """
+
+        return [
+            GamelogEntity(**gamelog)
+            for gamelog in self._gamelogs_collection.find({"playerId": player_id, "season": season})
+        ]

@@ -23,6 +23,7 @@ class PlayerRepository(IPlayerRepository):
         """
 
         return [PlayerEntity(**player) for player in self._players_collection.find()]
+    
 
     def upsert_many_projections(self, projections: list[ProjectionEntity]) -> None:
         """

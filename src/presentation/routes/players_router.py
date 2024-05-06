@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import APIRouter, Query, Response
+from fastapi import APIRouter, Query, Response, Path
 from src.infra.persistence.repositories import (
     PlayerRepository,
     TeamRepository,
@@ -11,6 +11,7 @@ from src.infra.projections_model import PlayerWeeklyProjectionsForecasterService
 from src.app.use_cases.players import PlayersUpserterUseCase
 from src.app.use_cases.projections import PlayerWeeklyProjectionsForecasterUseCase
 from src.app.use_cases.gamelogs import GamelogsUpserterUseCase
+from src.infra.external import PlayersSeasonProjectionsFetcher
 
 players_router = APIRouter()
 
@@ -26,14 +27,19 @@ gamelogs_fetcher = GamelogsFetcher()
 player_weekly_projections_forecaster_service = PlayerWeeklyProjectionsForecasterService()
 
 
+@players_router.get("/api/v1/testing")
+async def upsert_players():
+    return PlayersSeasonProjectionsFetcher().fetch_projections()
+
+
 @players_router.post("/api/v1/players")
 async def upsert_players():
     PlayersUpserterUseCase(player_repository, players_fetcher).execute()
     return Response(status_code=200)
 
+
 @players_router.get("/api/v1/players")
 async def get_players():
-    print(player_repository.get_season_totals(2023))
     return [dict(player) for player in player_repository.get_all()]
 
 
@@ -46,6 +52,13 @@ async def upsert_gamelogs(season: Optional[int] = Query(None)):
 @players_router.get("/api/v1/players/gamelogs")
 async def get_gamelogs():
     return [dict(gamelog) for gamelog in gamelogs_repository.get_all()]
+
+
+@players_router.get("/api/v1/players/{player_id}/gamelogs")
+async def get_gamelogs(
+    player_id: str = Path(..., title="The player ID"), season: int = Query(None, title="The season")
+):
+    return [dict(gamelog) for gamelog in gamelogs_repository.get_all_by_player_id_and_season(player_id, season)]
 
 
 @players_router.post("/api/v1/players/projections")

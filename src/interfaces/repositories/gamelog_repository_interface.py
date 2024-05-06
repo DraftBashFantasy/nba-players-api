@@ -14,3 +14,7 @@ class IGamelogRepository(ABC):
     @abstractmethod
     def get_all(self) -> list[GamelogEntity]:
         pass
+
+    @abstractmethod
+    def get_all_by_player_id_and_season(self, player_id: str, season: int) -> list[GamelogEntity]:
+        pass
