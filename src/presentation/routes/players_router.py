@@ -12,6 +12,7 @@ from src.app.use_cases.players import PlayersUpserterUseCase
 from src.app.use_cases.projections import PlayerWeeklyProjectionsForecasterUseCase
 from src.app.use_cases.gamelogs import GamelogsUpserterUseCase
 from src.infra.external import PlayersSeasonProjectionsFetcher
+from nba_api.stats.static import teams as teams_fetcher, players as nba_api_players_fetcher
 
 players_router = APIRouter()
 
@@ -28,8 +29,11 @@ player_weekly_projections_forecaster_service = PlayerWeeklyProjectionsForecaster
 
 
 @players_router.get("/api/v1/testing")
-async def upsert_players():
-    return PlayersSeasonProjectionsFetcher().fetch_projections()
+async def testing():
+    return {
+        "players": nba_api_players_fetcher.get_active_players(),
+        "teams": teams_fetcher.get_teams()
+    }
 
 
 @players_router.post("/api/v1/players")
