@@ -13,6 +13,7 @@ from src.app.use_cases.projections import PlayerWeeklyProjectionsForecasterUseCa
 from src.app.use_cases.gamelogs import GamelogsUpserterUseCase
 from src.infra.external import PlayersSeasonProjectionsFetcher
 from nba_api.stats.static import teams as teams_fetcher, players as nba_api_players_fetcher
+import requests
 
 players_router = APIRouter()
 
@@ -31,8 +32,9 @@ player_weekly_projections_forecaster_service = PlayerWeeklyProjectionsForecaster
 @players_router.get("/api/v1/testing")
 async def testing():
     return {
-        "players": nba_api_players_fetcher.get_active_players(),
-        "teams": teams_fetcher.get_teams()
+        "players": requests.get(url="https://api.sleeper.app/v1/players/nba").json(),
+        "adds": requests.get("https://api.sleeper.app/v1/players/nba/trending/add?limit=50").json(),
+        "drops": requests.get("https://api.sleeper.app/v1/players/nba/trending/add?limit=50").json(),
     }
 
 

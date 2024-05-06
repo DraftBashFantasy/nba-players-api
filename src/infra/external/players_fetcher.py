@@ -30,7 +30,7 @@ class PlayersFetcher(IPlayersFetcher):
         nba_api_players: list[dict] = nba_api_players_fetcher.get_players()
 
         # Get the NBA players from the Sleeper API
-        sleeper_api_players: list[dict] = requests.get(url="https://api.sleeper.app/v1/players/nba")
+        sleeper_api_players: list[dict] = requests.get(url="https://api.sleeper.app/v1/players/nba").json()
 
         # Get the player's projected season stats and rankings for points and category leagues
         season_projections_fetcher = PlayersSeasonProjectionsFetcher()
@@ -57,7 +57,7 @@ class PlayersFetcher(IPlayersFetcher):
                 season_projections = None
 
                 # Get the player's information from Sleeper's API
-                for sleeper_player_id, sleeper_player in sleeper_api_players.json().items():
+                for sleeper_player_id, sleeper_player in sleeper_api_players.items():
                     if first_name == sleeper_player["first_name"] and last_name == sleeper_player["last_name"]:
                         # Get the number of times the player has been added and dropped in Sleeper over the last 24 hours.
                         for player in player_drops_list:
