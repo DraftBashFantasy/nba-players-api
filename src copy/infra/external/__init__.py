@@ -1,5 +1,0 @@
-from infra.external.players_season_projections_fetcher import PlayersSeasonProjectionsFetcher
-from infra.external.scheduled_matchups_fetcher_service import ScheduledMatchupsFetcherService
-from infra.external.teams_fetcher import TeamsFetcher
-from infra.external.gamelogs_fetcher import GamelogsFetcher
-from infra.external.players_fetcher import PlayersFetcher
