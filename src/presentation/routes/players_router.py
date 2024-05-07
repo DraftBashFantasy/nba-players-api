@@ -39,6 +39,57 @@ async def testing():
         return Response(status_code=500, content=str(e))
 
 
+@players_router.get("/api/v1/testing3")
+async def testing():
+    try:
+        sleeper_api_players: dict = requests.get(url="https://api.sleeper.app/v1/players/nba").json()
+
+        player_name_to_sleeper_api_id_dict: dict = {
+            player_data.get("full_name", player_id): player_id
+            for player_id, player_data in sleeper_api_players.items()
+            if player_data.get("status") == "ACT"
+        }
+        season_projections_fetcher = PlayersSeasonProjectionsFetcher()
+        players_season_projections: dict[str, dict] = season_projections_fetcher.fetch_projections()
+
+        return {
+            "player_name_to_sleeper_api_id_dict": player_name_to_sleeper_api_id_dict,
+            "players_season_projections": players_season_projections,
+        }
+    except Exception as e:
+        return Response(status_code=500, content=str(e))
+        
+@players_router.get("/api/v1/testing4")
+async def testing():
+    try:
+        sleeper_api_players: dict = requests.get(url="https://api.sleeper.app/v1/players/nba").json()
+
+        player_name_to_sleeper_api_id_dict: dict = {
+            player_data.get("full_name", player_id): player_id
+            for player_id, player_data in sleeper_api_players.items()
+            if player_data.get("status") == "ACT"
+        }
+        season_projections_fetcher = PlayersSeasonProjectionsFetcher()
+        players_season_projections: dict[str, dict] = season_projections_fetcher.fetch_projections()
+        
+        ADDS_URL: str = "https://api.sleeper.app/v1/players/nba/trending/add?limit=50"
+        player_adds_dict: dict = {record["player_id"]: record["count"] for record in requests.get(ADDS_URL).json()}
+
+        # Get the players that are currently being dropped the most in Sleeper's fantasy app
+        DROPS_URL: str = "https://api.sleeper.app/v1/players/nba/trending/drop?limit=50"
+        player_drops_dict: dict = {record["player_id"]: record["count"] for record in requests.get(DROPS_URL).json()}
+
+        return {
+            "player_drop_dict": player_drops_dict,
+            "player_add_dict": player_adds_dict,
+            "player_name_to_sleeper_api_id_dict": player_name_to_sleeper_api_id_dict,
+            "players_season_projections": players_season_projections,
+        }
+
+    except Exception as e:
+        return Response(status_code=500, content=str(e))
+
+
 @players_router.get("/api/v1/testing2")
 async def testing():
     try:
