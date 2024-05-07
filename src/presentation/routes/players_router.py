@@ -1,5 +1,8 @@
 from typing import Optional
 from fastapi import APIRouter, Query, Response, Path
+import requests
+from src.domain.entities.team_entity import TeamEntity
+from src.infra.external.players_season_projections_fetcher import PlayersSeasonProjectionsFetcher
 from src.infra.persistence.repositories import (
     PlayerRepository,
     TeamRepository,
@@ -11,7 +14,7 @@ from src.infra.projections_model import PlayerWeeklyProjectionsForecasterService
 from src.app.use_cases.players import PlayersUpserterUseCase
 from src.app.use_cases.projections import PlayerWeeklyProjectionsForecasterUseCase
 from src.app.use_cases.gamelogs import GamelogsUpserterUseCase
-from src.infra.external.testing import Testing
+from nba_api.stats.static import teams as teams_fetcher, players as nba_api_players_fetcher
 
 players_router = APIRouter()
 
@@ -27,9 +30,69 @@ gamelogs_fetcher = GamelogsFetcher()
 player_weekly_projections_forecaster_service = PlayerWeeklyProjectionsForecasterService()
 
 
-@players_router.get("/api/v1/testing")
+@players_router.get("/api/v1/testing/teams")
 async def testing():
-    return Testing().execute()
+    try:
+        teams_dict: dict = {}
+        for team in teams_fetcher.get_teams():
+            teams_dict[team["abbreviation"]] = TeamEntity(
+                teamId=str(team["id"]), location=team["city"], name=team["nickname"], abbreviation=team["abbreviation"]
+            )
+        return teams_dict
+    except Exception as e:
+        return Response(status_code=500, content=str(e))
+
+
+@players_router.get("/api/v1/testing/players")
+async def testing():
+    try:
+        nba_api_players: list[dict] = nba_api_players_fetcher.get_players()
+        return nba_api_players
+    except Exception as e:
+        return Response(status_code=500, content=str(e))
+
+
+@players_router.get("/api/v1/testing/sleeper")
+async def testing():
+    try:
+        # Get the NBA players from the Sleeper API
+        sleeper_api_players: dict = requests.get(url="https://api.sleeper.app/v1/players/nba").json()
+
+        player_name_to_sleeper_api_id_dict: dict = {
+            player_data.get("full_name", player_id): player_id
+            for player_id, player_data in sleeper_api_players.items()
+            if player_data.get("status") == "ACT"
+        }
+        return player_name_to_sleeper_api_id_dict
+    except Exception as e:
+        return Response(status_code=500, content=str(e))
+
+
+@players_router.get("/api/v1/testing/projections")
+async def testing():
+    try:
+        # Get the player's projected season stats and rankings for points and category leagues
+        season_projections_fetcher = PlayersSeasonProjectionsFetcher()
+        players_season_projections: dict[str, dict] = season_projections_fetcher.fetch_projections()
+        return players_season_projections
+    except Exception as e:
+        return Response(status_code=500, content=str(e))
+
+
+@players_router.get("/api/v1/testing/adds")
+async def testing():
+    try:
+        # Get the players that are currently being added the most in Sleeper's fantasy app
+        ADDS_URL: str = "https://api.sleeper.app/v1/players/nba/trending/add?limit=50"
+        player_adds_dict: dict = {record["player_id"]: record["count"] for record in requests.get(ADDS_URL).json()}
+
+        # Get the players that are currently being dropped the most in Sleeper's fantasy app
+        DROPS_URL: str = "https://api.sleeper.app/v1/players/nba/trending/drop?limit=50"
+        player_drops_dict: dict = {record["player_id"]: record["count"] for record in requests.get(DROPS_URL).json()}
+        
+        return {"drops": player_drops_dict, "adds": player_adds_dict}
+    except Exception as e:
+        return Response(status_code=500, content=str(e))
 
 
 @players_router.post("/api/v1/players")
