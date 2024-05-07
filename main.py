@@ -4,8 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.presentation.routes import (
     teams_router,
     players_router,
-    scheduled_matchups_router,
-    gamelogs_router
+    scheduled_matchups_router
 )
 
 app = FastAPI(
@@ -38,4 +37,3 @@ async def main():
 app.include_router(players_router)
 app.include_router(teams_router)
 app.include_router(scheduled_matchups_router)
-app.include_router(gamelogs_router)

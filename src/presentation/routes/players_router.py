@@ -29,19 +29,13 @@ gamelogs_fetcher = GamelogsFetcher()
 player_weekly_projections_forecaster_service = PlayerWeeklyProjectionsForecasterService()
 
 
-@players_router.get("/api/v1/testing")
-async def testing():
-    return {
-        "players": requests.get(url="https://api.sleeper.app/v1/players/nba").json(),
-        "adds": requests.get("https://api.sleeper.app/v1/players/nba/trending/add?limit=50").json(),
-        "drops": requests.get("https://api.sleeper.app/v1/players/nba/trending/add?limit=50").json(),
-    }
-
-
 @players_router.post("/api/v1/players")
 async def upsert_players():
-    PlayersUpserterUseCase(player_repository, players_fetcher).execute()
-    return Response(status_code=200)
+    try:
+        PlayersUpserterUseCase(player_repository, players_fetcher).execute()
+        return Response(status_code=200)
+    except Exception as e:
+        return Response(status_code=500, content=str(e))
 
 
 @players_router.get("/api/v1/players")
