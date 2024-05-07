@@ -22,8 +22,11 @@ class PlayerRepository(IPlayerRepository):
         :rtype: list[PlayerEntity]
         """
 
-        return [PlayerEntity(**player) for player in self._players_collection.find()]
-    
+        return [
+            PlayerEntity(**player)
+            for player in self._players_collection.find({"seasonProjections.pointsLeagueRanking": {"$ne": None}})
+            .sort("seasonProjections.pointsLeagueRanking", 1)
+        ]
 
     def upsert_many_projections(self, projections: list[ProjectionEntity]) -> None:
         """
@@ -109,24 +112,25 @@ class PlayerRepository(IPlayerRepository):
         # Execute bulk write operations
         self._players_collection.bulk_write(bulk_operations)
 
-    def get_season_totals(self, season: int) -> dict[str, PlayerSeasonTotals]:
+    def get_season_totals(self, season: int) -> dict[str, dict]:
         """
         Get the season totals for all players in the database.
-        
+
         :param season int: The season for which to retrieve player totals.
         :return: A dictionary mapping player IDs to their season totals.
         :rtype: dict[str, PlayerSeasonTotals]
         """
 
-        players_totals: list[PlayerSeasonTotals] = gamelogs_collection.aggregate(
+        players_totals: list[dict] = gamelogs_collection.aggregate(
             [
                 {"$match": {"season": season}},
                 {"$match": {"isActive": True}},
+                {"$match": {"isRegularSeasonGame": True}},
                 {
                     "$group": {
                         "_id": "$playerId",
                         "points": {"$sum": "$points"},
-                        "reboundsTotal": {"$sum": "$reboundsTotal"},
+                        "rebounds": {"$sum": "$reboundsTotal"},
                         "assists": {"$sum": "$assists"},
                         "steals": {"$sum": "$steals"},
                         "blocks": {"$sum": "$blocks"},
@@ -142,5 +146,11 @@ class PlayerRepository(IPlayerRepository):
                 },
             ]
         )
-        
-        return {player_totals.pop("_id"): player_totals for player_totals in players_totals}
+
+        player_season_totals_dict: dict = {}
+        for player_totals in players_totals:
+            player_id = player_totals.pop("_id")
+            totals: PlayerSeasonTotals = PlayerSeasonTotals(**player_totals)
+            player_season_totals_dict[player_id] = totals
+
+        return player_season_totals_dict

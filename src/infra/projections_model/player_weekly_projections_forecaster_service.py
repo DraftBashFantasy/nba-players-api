@@ -73,7 +73,10 @@ class PlayerWeeklyProjectionsForecasterService(IPlayerWeeklyProjectionsForecaste
                     opposing_team = schedule.homeTeam
 
                 is_starter: bool = player.depthChartOrder == 1
-                is_injured: bool = player.injuryStatus is not None
+                is_injured: bool = False
+                if player.injuryStatus is not None:
+                    is_injured = player.injuryStatus.upper() == "OUT"
+                    
                 player_game_projection: ProjectionEntity = None
 
                 if not is_injured:
@@ -88,7 +91,7 @@ class PlayerWeeklyProjectionsForecasterService(IPlayerWeeklyProjectionsForecaste
                         playerTeam=player_team,
                         opposingTeam=opposing_team,
                         fieldGoalsAttempted=predictions["fieldGoalsAttempted"],
-                        fieldGoalsMade=predictions["fieldGoalsAttempted"],
+                        fieldGoalsMade=predictions["fieldGoalsMade"],
                         threesMade=predictions["threesMade"],
                         freeThrowsAttempted=predictions["freeThrowsAttempted"],
                         freeThrowsMade=predictions["freeThrowsMade"],

@@ -10,7 +10,7 @@ class PlayerSeasonTotals(BaseModel):
     steals: int
     blocks: int
     assists: int
-    reboundsTotal: int
+    rebounds: int
     turnovers: int
     freeThrowsAttempted: int
     freeThrowsMade: int

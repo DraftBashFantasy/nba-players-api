@@ -28,7 +28,7 @@ class PlayersUpserterUseCase():
         player_totals: dict = self.player_repository.get_season_totals(current_season)
         for player in players:
             try:
-                player.seasonTotals = PlayerSeasonTotals(**player_totals[player.playerId])
+                player.seasonTotals = player_totals[player.playerId]
             except KeyError:
                 continue
 

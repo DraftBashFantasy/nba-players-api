@@ -47,5 +47,7 @@ class GamelogRepository(IGamelogRepository):
 
         return [
             GamelogEntity(**gamelog)
-            for gamelog in self._gamelogs_collection.find({"playerId": player_id, "season": season})
+            for gamelog in self._gamelogs_collection.find(
+                {"playerId": player_id, "season": season, "isRegularSeasonGame": True}
+            ).sort("dateUTC", -1)
         ]

@@ -9,6 +9,7 @@ class GamelogEntity(BaseModel):
     playerTeam: TeamEntity
     isHomeGame: bool
     isActive: bool
+    isRegularSeasonGame: bool
     opposingTeam: TeamEntity
     playerTeamScore: int
     opposingTeamScore: int
@@ -45,6 +46,7 @@ class GamelogEntity(BaseModel):
             "playerTeamScore": self.playerTeamScore,
             "opposingTeamScore": self.opposingTeamScore,
             "position": self.position,
+            "isRegularSeasonGame": self.isRegularSeasonGame,
             "isStarter": self.isStarter,
             "minutes": self.minutes,
             "points": self.points,

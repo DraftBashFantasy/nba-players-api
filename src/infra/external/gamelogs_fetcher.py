@@ -14,12 +14,12 @@ class GamelogsFetcher(IGamelogsFetcher):
     :param execute: Fetches NBA player gamelogs according to the given game_ids.
     """
 
-    def get_recent_game_ids(self) -> list[int]:
+    def get_recent_game_ids(self) -> dict[str, bool]:
         """
         Gets the game_ids over the last 3 days
 
-        :return: A list of game_ids for the last 3 days.
-        :rtype: list[int]
+        :return: A dictionary mapping recent game_ids to their regular season status
+        :rtype: dict[str, bool]
         """
 
         # Get the current date and the date 3 days ago
@@ -35,53 +35,56 @@ class GamelogsFetcher(IGamelogsFetcher):
             + f"{current_season}/league/00_full_schedule.json"
         ).json()
 
-        game_ids = []
+        game_ids = {}
         for recent_game in recent_games["lscd"]:
             games = recent_game["mscd"]["g"]
             for game in games:
                 if game["gdte"] >= date_three_days_ago and game["gdte"] < current_date:
-                    game_ids.append(game["gid"])
+                    game_ids[game["gid"]] = len(game["seri"]) == 0  # Check if the game is a playoff game
 
         return game_ids
 
-    def get_season_game_ids(self, season: int) -> list[int]:
+    def get_season_game_ids(self, season: int) -> dict[str, bool]:
         """
         Gets the game_ids for a given season.
 
         :param season int: The season for which to get the game_ids, i.e. 2023 for the 2023-24 season.
-        :return: A list of game_ids for the given season.
-        :rtype: list[int]
+        :return: A dictionary of game_ids and if the game is a regular season game
+        :rtype: dict[str, boolean]
         """
 
         # Get the game_ids for the given season
         recent_games = requests.get(
-            "https://data.nba.com/data/10s/v2015/json/mobile_teams/nba/"
-            + f"{season}/league/00_full_schedule.json"
+            "https://data.nba.com/data/10s/v2015/json/mobile_teams/nba/" + f"{season}/league/00_full_schedule.json"
         ).json()["lscd"]
 
-        game_ids: list[int] = []
+        game_ids: list[int] = {}
         for recent_game in recent_games:
             games = recent_game["mscd"]["g"]
             for game in games:
-                game_ids.append(game["gid"])
+                game_ids[game["gid"]] = len(game["seri"]) == 0  # Check if the game is a playoff game
         return game_ids
 
-    def get_new_gamelogs(self, game_ids: list[int]) -> list[GamelogEntity]:
+    def get_new_gamelogs(self, game_ids: dict[str, bool]) -> list[GamelogEntity]:
         """
         Fetches NBA player gamelogs according to the given game_ids.
 
-        :param game_ids list[int]: A list of game_ids for which to fetch gamelogs.
+        :param game_ids dict[str, str]: A dictionary of game_ids and their corresponding playoff status.
         :return: A list of gamelog entities for each given game_id
         :rtype: list[GamelogEntity]
         """
 
         # Gets player data, i.e. position, from Sleeper's API
-        players_response = requests.get("https://api.sleeper.app/v1/players/nba")
-        players_data = players_response.json()
+        players_data = requests.get("https://api.sleeper.app/v1/players/nba").json()
+        player_name_to_sleeper_api_id_dict: dict = {
+            player_data.get("full_name", player_id): player_id
+            for player_id, player_data in players_data.items()
+            if player_data.get("status") == "ACT"
+        }
 
         # Get the gamelogs for each player in each game
         gamelogs = []
-        for game_id in game_ids:
+        for game_id, is_regular_season_game in game_ids.items():
             try:
                 # Get the game data from the NBA API
                 game_response = requests.get(
@@ -113,16 +116,13 @@ class GamelogsFetcher(IGamelogsFetcher):
                     minutes = float(stats["minutes"].split("M")[0][2:])
                     seconds = float(stats["minutes"].split("M")[1][:2])
                     minutes_played = minutes + (seconds / 60)
-                    is_active = int(home_player.get("notPlayingReason") is None)
+                    is_active: bool = home_player.get("notPlayingReason") is None
+                    full_name = f"{home_player['firstName']} {home_player['familyName']}"
+                    sleeper_id: str = player_name_to_sleeper_api_id_dict.get(full_name, None)
+                    sleeper_api_player: dict = players_data.get(sleeper_id)
 
-                    # Get the player's position from the player data fetched from Sleeper's API
-                    for key, player in players_data.items():
-                        if (
-                            player["first_name"] == home_player["firstName"]
-                            and player["last_name"] in home_player["familyName"]
-                        ):
-                            position = player["position"]
-                            break
+                    if sleeper_api_player is not None:
+                        position = sleeper_api_player.get("position")
 
                     gamelogs.append(
                         GamelogEntity(
@@ -143,6 +143,7 @@ class GamelogsFetcher(IGamelogsFetcher):
                                 location=away_team["teamCity"],
                                 name=away_team["teamName"],
                             ),
+                            isRegularSeasonGame=is_regular_season_game,
                             isActive=is_active,
                             playerTeamScore=home_team["score"],
                             opposingTeamScore=away_team["score"],
@@ -183,9 +184,7 @@ class GamelogsFetcher(IGamelogsFetcher):
                             player["first_name"] == away_player["firstName"]
                             and player["last_name"] in away_player["familyName"]
                         ):
-                            position = player[
-                                "position"
-                            ]  # Position the player plays, i.e. center, pointguard, smallforward, etc
+                            position = player["position"]  # Position the player plays, i.e. center, pointguard, etc
 
                     gamelogs.append(
                         GamelogEntity(
@@ -207,6 +206,7 @@ class GamelogsFetcher(IGamelogsFetcher):
                                 name=home_team["teamName"],
                             ),
                             isActive=is_active,
+                            isRegularSeasonGame=is_regular_season_game,
                             playerTeamScore=away_team["score"],
                             opposingTeamScore=home_team["score"],
                             position=position,
@@ -231,8 +231,8 @@ class GamelogsFetcher(IGamelogsFetcher):
                         )
                     )
             except Exception as e:
-                print(f"Error: {e}")
+                print(f"Error: {e.with_traceback(e.__traceback__)}")
             finally:
-                time.sleep(0.05)
+                time.sleep(0.1)
 
         return gamelogs
