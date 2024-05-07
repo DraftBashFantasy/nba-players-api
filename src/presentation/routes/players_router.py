@@ -79,7 +79,7 @@ async def testing():
 
         # Get the players that are currently being dropped the most in Sleeper's fantasy app
         DROPS_URL: str = "https://api.sleeper.app/v1/players/nba/trending/drop?limit=50"
-        await asyncio.sleep(2)
+        asyncio.sleep(2)
         player_drops_dict: dict = {record["player_id"]: record["count"] for record in requests.get(DROPS_URL).json()}
 
         return {
@@ -200,7 +200,7 @@ async def testing():
 @players_router.post("/api/v1/players")
 async def upsert_players():
     try:
-        PlayersUpserterUseCase(player_repository, players_fetcher).execute()
+        await PlayersUpserterUseCase(player_repository, players_fetcher).execute()
         return Response(status_code=200)
     except Exception as e:
         return Response(status_code=500, content=str(e))

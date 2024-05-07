@@ -1,3 +1,4 @@
+import asyncio
 import requests
 from nba_api.stats.static import teams as teams_fetcher, players as nba_api_players_fetcher
 from src.domain.entities import PlayerEntity, TeamEntity
@@ -14,7 +15,7 @@ class PlayersFetcher(IPlayersFetcher):
     including projections, rankings, and other relevant information.
     """
 
-    def execute(self) -> list[PlayerEntity]:
+    async def execute(self) -> list[PlayerEntity]:
         """Fetches NBA players from APIs.
 
         :return: A list of player entities
@@ -44,10 +45,12 @@ class PlayersFetcher(IPlayersFetcher):
 
         # Get the players that are currently being added the most in Sleeper's fantasy app
         ADDS_URL: str = "https://api.sleeper.app/v1/players/nba/trending/add?limit=50"
+        await asyncio.sleep(5)  # Sleep for 5 seconds to avoid rate limiting
         player_adds_dict: dict = {record["player_id"]: record["count"] for record in requests.get(ADDS_URL).json()}
 
         # Get the players that are currently being dropped the most in Sleeper's fantasy app
         DROPS_URL: str = "https://api.sleeper.app/v1/players/nba/trending/drop?limit=50"
+        await asyncio.sleep(5)  # Sleep for 5 seconds to avoid rate limiting
         player_drops_dict: dict = {record["player_id"]: record["count"] for record in requests.get(DROPS_URL).json()}
 
         # Create a list of player entities

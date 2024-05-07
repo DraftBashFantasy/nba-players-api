@@ -15,7 +15,7 @@ class PlayersUpserterUseCase():
         self.player_repository = player_repository
         self.playersFetcher = playersFetcher
 
-    def execute(self) -> None:
+    async def execute(self) -> None:
         """ 
         Upserts the players into the database. 
         """
@@ -24,7 +24,7 @@ class PlayersUpserterUseCase():
         if datetime.now().month >= 10:
             current_season = current_season
 
-        players: list[PlayerEntity] = self.playersFetcher.execute()
+        players: list[PlayerEntity] = await self.playersFetcher.execute()
         player_totals: dict = self.player_repository.get_season_totals(current_season)
         for player in players:
             try:
