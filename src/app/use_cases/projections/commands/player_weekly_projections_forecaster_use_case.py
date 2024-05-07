@@ -29,10 +29,9 @@ class PlayerWeeklyProjectionsForecasterUseCase:
 
         week_start: datetime = datetime.utcnow() - timedelta(days=(datetime.utcnow().weekday() - 0) % 7)
         week_finish: datetime = week_start + timedelta(days=7)
-        date_one_year_ago = datetime.utcnow() - timedelta(days=365)
         players: list[PlayerEntity] = self._player_repository.get_all()
         gamelogs: list[GamelogEntity] = self._gamelog_repository.get_all_between_dates(
-            date_one_year_ago, datetime.utcnow()
+            datetime.utcnow() - timedelta(days=365), datetime.utcnow()
         )
         matchups: list[ScheduledMatchupEntity] = self._scheduled_matchup_repository.get_matchups_between_dates(
             week_start, week_finish

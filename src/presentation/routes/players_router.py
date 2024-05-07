@@ -1,6 +1,8 @@
 import asyncio
+from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import APIRouter, Query, Response, Path
+import pandas as pd
 import requests
 from src.domain.entities.team_entity import TeamEntity
 from src.infra.external.players_season_projections_fetcher import PlayersSeasonProjectionsFetcher
@@ -35,7 +37,12 @@ player_weekly_projections_forecaster_service = PlayerWeeklyProjectionsForecaster
 @players_router.get("/api/v1/testing1")
 async def testing():
     try:
-        return Testing().execute()
+        gamelogs = gamelogs_repository.get_all_between_dates(
+            datetime.utcnow() - timedelta(days=365), datetime.utcnow()
+        )
+        gamelogs_df = pd.json_normalize([dict(gamelog) for gamelog in gamelogs]).iloc[0]
+        return gamelogs_df["dateUTC"]
+
     except Exception as e:
         return Response(status_code=500, content=str(e))
 

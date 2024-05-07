@@ -23,7 +23,7 @@ class PlayerWeeklyProjectionsForecasterService(IPlayerWeeklyProjectionsForecaste
         :rtype: dict
         """
 
-        active_players: list[PlayerEntity] = [player for player in players if player.team is not None][:2]
+        active_players: list[PlayerEntity] = [player for player in players if player.team is not None]
 
         gamelogs_df: pd.DataFrame = pd.json_normalize([dict(gamelog) for gamelog in gamelogs])[
             [
