@@ -119,12 +119,12 @@ async def testing():
 
         # Get the players that are currently being added the most in Sleeper's fantasy app
         ADDS_URL: str = "https://api.sleeper.app/v1/players/nba/trending/add?limit=50"
-        await asyncio.sleep(5)  # Sleep for 5 seconds to avoid rate limiting
+        await asyncio.sleep(7)  # Sleep for 7 seconds to avoid rate limiting
         player_adds_dict: dict = {record["player_id"]: record["count"] for record in requests.get(ADDS_URL).json()}
 
         # Get the players that are currently being dropped the most in Sleeper's fantasy app
         DROPS_URL: str = "https://api.sleeper.app/v1/players/nba/trending/drop?limit=50"
-        await asyncio.sleep(5)  # Sleep for 5 seconds to avoid rate limiting
+        await asyncio.sleep(7)  # Sleep for 7 seconds to avoid rate limiting
         player_drops_dict: dict = {record["player_id"]: record["count"] for record in requests.get(DROPS_URL).json()}
 
         return {

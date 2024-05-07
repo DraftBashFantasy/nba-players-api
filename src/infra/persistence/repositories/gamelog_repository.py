@@ -1,3 +1,4 @@
+from datetime import datetime
 from pymongo import UpdateOne
 from src.infra.persistence.database import gamelogs_collection
 from src.interfaces.repositories import IGamelogRepository
@@ -26,6 +27,26 @@ class GamelogRepository(IGamelogRepository):
                 )
             )
         self._gamelogs_collection.bulk_write(bulk_operations)
+
+    def get_all_between_dates(self, start_date: datetime, end_date: datetime) -> list[GamelogEntity]:
+        """
+        Get gamelogs from the database within a specified date range.
+
+        :param start_date: Start date of the range (inclusive).
+        :param end_date: End date of the range (exclusive).
+        :return: A list of gamelogs within the specified date range.
+        """
+
+        gamelogs: list[dict] = self._gamelogs_collection.find(
+            {
+                "dateUTC": {
+                    "$gte": start_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "$lt": end_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                }
+            }
+        )
+
+        return [GamelogEntity(**gamelog) for gamelog in gamelogs]
 
     def get_all(self) -> list[GamelogEntity]:
         """

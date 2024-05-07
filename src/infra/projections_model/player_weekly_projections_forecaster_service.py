@@ -76,7 +76,7 @@ class PlayerWeeklyProjectionsForecasterService(IPlayerWeeklyProjectionsForecaste
                 is_injured: bool = False
                 if player.injuryStatus is not None:
                     is_injured = player.injuryStatus.upper() == "OUT"
-                    
+
                 player_game_projection: ProjectionEntity = None
 
                 if not is_injured:
