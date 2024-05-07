@@ -1,3 +1,4 @@
+import asyncio
 from typing import Optional
 from fastapi import APIRouter, Query, Response, Path
 import requests
@@ -58,7 +59,7 @@ async def testing():
         }
     except Exception as e:
         return Response(status_code=500, content=str(e))
-        
+
 @players_router.get("/api/v1/testing4")
 async def testing():
     try:
@@ -71,12 +72,14 @@ async def testing():
         }
         season_projections_fetcher = PlayersSeasonProjectionsFetcher()
         players_season_projections: dict[str, dict] = season_projections_fetcher.fetch_projections()
-        
+
         ADDS_URL: str = "https://api.sleeper.app/v1/players/nba/trending/add?limit=50"
+        await asyncio.sleep(2)
         player_adds_dict: dict = {record["player_id"]: record["count"] for record in requests.get(ADDS_URL).json()}
 
         # Get the players that are currently being dropped the most in Sleeper's fantasy app
         DROPS_URL: str = "https://api.sleeper.app/v1/players/nba/trending/drop?limit=50"
+        await asyncio.sleep(2)
         player_drops_dict: dict = {record["player_id"]: record["count"] for record in requests.get(DROPS_URL).json()}
 
         return {
