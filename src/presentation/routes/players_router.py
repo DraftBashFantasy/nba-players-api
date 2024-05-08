@@ -35,47 +35,37 @@ player_weekly_projections_forecaster_service = PlayerWeeklyProjectionsForecaster
 
 
 @players_router.get("/api/v1/testing1")
-async def testing():
+async def upsert_players():
     try:
-        gamelogs = gamelogs_repository.get_all_between_dates(
-            datetime.utcnow() - timedelta(days=365), datetime.utcnow()
-        )
-        return [dict(gamelog) for gamelog in gamelogs][0]
-
+        gamelogs = gamelog_repository.get_all_between_dates(datetime.utcnow() - timedelta(days=365), datetime.utcnow())
+        return len(gamelogs)
     except Exception as e:
         return Response(status_code=500, content=str(e))
 
 
 @players_router.get("/api/v1/testing2")
-async def testing():
+async def upsert_players():
     try:
-        data = {
-            "employees": [
-                {
-                    "id": 1,
-                    "name": "John",
-                    "department": {
-                        "id": 101,
-                        "name": "Engineering"
-                    },
-                    "skills": ["Python", "JavaScript", "SQL"]
-                },
-                {
-                    "id": 2,
-                    "name": "Jane",
-                    "department": {
-                        "id": 102,
-                        "name": "Marketing"
-                    },
-                    "skills": ["Marketing Strategy", "Social Media"]
-                }
-            ]
-        }
+        gamelogs = gamelog_repository.get_all_between_dates(datetime.utcnow() - timedelta(days=3), datetime.utcnow())
+        return len(gamelogs)
+    except Exception as e:
+        return Response(status_code=500, content=str(e))
 
-        # Normalize the JSON data into a DataFrame
-        df = pd.json_normalize(data['employees']).iloc[0]
-        return df.to_dict()
 
+@players_router.get("/api/v1/testing3")
+async def upsert_players():
+    try:
+        gamelogs = gamelog_repository.get_all_between_dates(datetime.utcnow() - timedelta(days=3), datetime.utcnow())
+        return pd.json_normalize([dict(gamelog) for gamelog in gamelogs]).to_dict("records")
+    except Exception as e:
+        return Response(status_code=500, content=str(e))
+
+
+@players_router.get("/api/v1/testing4")
+async def upsert_players():
+    try:
+        gamelogs = gamelog_repository.get_all_between_dates(datetime.utcnow() - timedelta(days=100), datetime.utcnow())
+        return pd.json_normalize([dict(gamelog) for gamelog in gamelogs]).to_dict("records")
     except Exception as e:
         return Response(status_code=500, content=str(e))
 
