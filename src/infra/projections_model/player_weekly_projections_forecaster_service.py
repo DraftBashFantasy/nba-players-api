@@ -56,72 +56,76 @@ class PlayerWeeklyProjectionsForecasterService(IPlayerWeeklyProjectionsForecaste
 
         player_projections: list[ProjectionEntity] = []
         for player in active_players:
-            player_scheduled_matchups: list[ScheduledMatchupEntity] = []
-            for matchup in scheduled_matchups:
-                matchup_datetime = pd.to_datetime(matchup.dateTimeUTC)
-                is_home_player_team: bool = matchup.homeTeam.teamId == player.team.teamId
-                is_away_player_team: bool = matchup.awayTeam.teamId == player.team.teamId
+            try:
+                player_scheduled_matchups: list[ScheduledMatchupEntity] = []
+                for matchup in scheduled_matchups:
+                    matchup_datetime = pd.to_datetime(matchup.dateTimeUTC)
+                    is_home_player_team: bool = matchup.homeTeam.teamId == player.team.teamId
+                    is_away_player_team: bool = matchup.awayTeam.teamId == player.team.teamId
 
-                if (is_home_player_team or is_away_player_team) and matchup_datetime > current_datetime:
-                    player_scheduled_matchups.append(matchup)
+                    if (is_home_player_team or is_away_player_team) and matchup_datetime > current_datetime:
+                        player_scheduled_matchups.append(matchup)
 
-            for schedule in player_scheduled_matchups:
-                player_team: TeamEntity = schedule.homeTeam
-                opposing_team: TeamEntity = schedule.awayTeam
-                if schedule.awayTeam.teamId == player.team.teamId:
-                    player_team = schedule.awayTeam
-                    opposing_team = schedule.homeTeam
+                for schedule in player_scheduled_matchups:
+                    player_team: TeamEntity = schedule.homeTeam
+                    opposing_team: TeamEntity = schedule.awayTeam
+                    if schedule.awayTeam.teamId == player.team.teamId:
+                        player_team = schedule.awayTeam
+                        opposing_team = schedule.homeTeam
 
-                is_starter: bool = player.depthChartOrder == 1
-                is_injured: bool = False
-                if player.injuryStatus is not None:
-                    is_injured = player.injuryStatus.upper() == "OUT"
+                    is_starter: bool = player.depthChartOrder == 1
+                    is_injured: bool = False
+                    if player.injuryStatus is not None:
+                        is_injured = player.injuryStatus.upper() == "OUT"
 
-                player_game_projection: ProjectionEntity = None
+                    player_game_projection: ProjectionEntity = None
 
-                if not is_injured:
-                    player_averages: pd.Series = player_averages_df.loc[player.playerId]
-                    defense_ratings: pd.Series = defense_df.loc[(opposing_team.teamId, player.position, is_starter)]
+                    if not is_injured:
+                        player_averages: pd.Series = player_averages_df.loc[player.playerId]
+                        defense_ratings: pd.Series = defense_df.loc[(opposing_team.teamId, player.position, is_starter)]
 
-                    predictions: list[float] = self._calculate_projections(player_averages, defense_ratings)
-                    player_game_projection: ProjectionEntity = ProjectionEntity(
-                        gameId=schedule.gameId,
-                        dateUTC=schedule.dateTimeUTC,
-                        playerId=player.playerId,
-                        playerTeam=player_team,
-                        opposingTeam=opposing_team,
-                        fieldGoalsAttempted=predictions["fieldGoalsAttempted"],
-                        fieldGoalsMade=predictions["fieldGoalsMade"],
-                        threesMade=predictions["threesMade"],
-                        freeThrowsAttempted=predictions["freeThrowsAttempted"],
-                        freeThrowsMade=predictions["freeThrowsMade"],
-                        points=predictions["points"],
-                        assists=predictions["assists"],
-                        rebounds=predictions["reboundsTotal"],
-                        turnovers=predictions["turnovers"],
-                        steals=predictions["steals"],
-                        blocks=predictions["blocks"],
-                    )
-                else:
-                    player_game_projection = ProjectionEntity(
-                        gameId=schedule.gameId,
-                        dateUTC=schedule.dateTimeUTC,
-                        playerId=player.playerId,
-                        playerTeam=player_team,
-                        opposingTeam=opposing_team,
-                        fieldGoalsAttempted=0,
-                        fieldGoalsMade=0,
-                        threesMade=0,
-                        freeThrowsAttempted=0,
-                        freeThrowsMade=0,
-                        points=0,
-                        assists=0,
-                        rebounds=0,
-                        turnovers=0,
-                        steals=0,
-                        blocks=0,
-                    )
-                player_projections.append(player_game_projection)
+                        predictions: list[float] = self._calculate_projections(player_averages, defense_ratings)
+                        player_game_projection: ProjectionEntity = ProjectionEntity(
+                            gameId=schedule.gameId,
+                            dateUTC=schedule.dateTimeUTC,
+                            playerId=player.playerId,
+                            playerTeam=player_team,
+                            opposingTeam=opposing_team,
+                            fieldGoalsAttempted=predictions["fieldGoalsAttempted"],
+                            fieldGoalsMade=predictions["fieldGoalsMade"],
+                            threesMade=predictions["threesMade"],
+                            freeThrowsAttempted=predictions["freeThrowsAttempted"],
+                            freeThrowsMade=predictions["freeThrowsMade"],
+                            points=predictions["points"],
+                            assists=predictions["assists"],
+                            rebounds=predictions["reboundsTotal"],
+                            turnovers=predictions["turnovers"],
+                            steals=predictions["steals"],
+                            blocks=predictions["blocks"],
+                        )
+                    else:
+                        player_game_projection = ProjectionEntity(
+                            gameId=schedule.gameId,
+                            dateUTC=schedule.dateTimeUTC,
+                            playerId=player.playerId,
+                            playerTeam=player_team,
+                            opposingTeam=opposing_team,
+                            fieldGoalsAttempted=0,
+                            fieldGoalsMade=0,
+                            threesMade=0,
+                            freeThrowsAttempted=0,
+                            freeThrowsMade=0,
+                            points=0,
+                            assists=0,
+                            rebounds=0,
+                            turnovers=0,
+                            steals=0,
+                            blocks=0,
+                        )
+                    player_projections.append(player_game_projection)
+            except Exception as e:
+                print(f"Error forecasting player projections: {e}")
+                continue
 
         return player_projections
 

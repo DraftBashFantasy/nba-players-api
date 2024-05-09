@@ -64,7 +64,7 @@ async def upsert_players():
 @players_router.get("/api/v1/testing4")
 async def upsert_players():
     try:
-        gamelogs = gamelog_repository.get_all_between_dates(datetime.utcnow() - timedelta(days=30), datetime.utcnow())
+        gamelogs = gamelog_repository.get_all_between_dates(datetime.utcnow() - timedelta(days=50), datetime.utcnow())
         return len(gamelogs)
     except Exception as e:
         return Response(status_code=500, content=str(e))
@@ -73,8 +73,31 @@ async def upsert_players():
 @players_router.get("/api/v1/testing5")
 async def upsert_players():
     try:
-        gamelogs = gamelog_repository.get_all_between_dates(datetime.utcnow() - timedelta(days=60), datetime.utcnow())
-        return len(gamelogs)
+        gamelogs = gamelog_repository.get_all_between_dates(datetime.utcnow() - timedelta(days=50), datetime.utcnow())
+        gamelogs_df: pd.DataFrame = pd.json_normalize([dict(gamelog) for gamelog in gamelogs])[
+            [
+                "playerId",
+                "dateUTC",
+                "position",
+                "isStarter",
+                "isActive",
+                "playerTeam.teamId",
+                "opposingTeam.teamId",
+                "minutes",
+                "fieldGoalsAttempted",
+                "fieldGoalsMade",
+                "freeThrowsAttempted",
+                "freeThrowsMade",
+                "points",
+                "threesMade",
+                "steals",
+                "blocks",
+                "assists",
+                "reboundsTotal",
+                "turnovers",
+            ]
+        ]
+        return gamelogs_df.to_dict("records")
     except Exception as e:
         return Response(status_code=500, content=str(e))
 

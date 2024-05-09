@@ -31,12 +31,13 @@ class PlayerWeeklyProjectionsForecasterUseCase:
         week_finish: datetime = week_start + timedelta(days=7)
         players: list[PlayerEntity] = self._player_repository.get_all()
         gamelogs: list[GamelogEntity] = self._gamelog_repository.get_all_between_dates(
-            datetime.utcnow() - timedelta(days=365), datetime.utcnow()
+            datetime.utcnow() - timedelta(days=50), datetime.utcnow()
         )
-        matchups: list[ScheduledMatchupEntity] = self._scheduled_matchup_repository.get_matchups_between_dates(
-            week_start, week_finish
-        )
+        if len(gamelogs) > 0:
+            matchups: list[ScheduledMatchupEntity] = self._scheduled_matchup_repository.get_matchups_between_dates(
+                week_start, week_finish
+            )
 
-        projections: list[ProjectionEntity] = self._forecaster_service.execute(gamelogs, matchups, players)
-        self._player_repository.upsert_many_projections(projections)
-        self._projection_repository.upsert_many(projections)
+            projections: list[ProjectionEntity] = self._forecaster_service.execute(gamelogs, matchups, players)
+            self._player_repository.upsert_many_projections(projections)
+            self._projection_repository.upsert_many(projections)
