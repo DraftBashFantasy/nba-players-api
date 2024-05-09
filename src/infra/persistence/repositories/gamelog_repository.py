@@ -37,15 +37,19 @@ class GamelogRepository(IGamelogRepository):
         :return: A list of gamelogs within the specified date range.
         """
 
-        gamelogs: list[dict] = self._gamelogs_collection.find(
-            {
-                "dateUTC": {
-                    "$gte": start_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    "$lt": end_date.strftime("%Y-%m-%dT%H:%M:%SZ")
-                },
-                "isActive": True
-            }
-        )
+        gamelogs: list[dict] = (
+            self._gamelogs_collection.find(
+                {
+                    "dateUTC": {
+                        "$gte": start_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        "$lt": end_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    },
+                    "isActive": True,
+                }
+            )
+            .sort("dateUTC", -1)
+            .limit(7500)
+        )  # Limit to 7500 gamelogs to avoid issues in production environment.
 
         return [GamelogEntity(**gamelog) for gamelog in gamelogs]
 

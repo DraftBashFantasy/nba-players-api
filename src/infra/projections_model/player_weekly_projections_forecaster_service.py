@@ -266,7 +266,7 @@ class PlayerWeeklyProjectionsForecasterService(IPlayerWeeklyProjectionsForecaste
         ]
 
         if len(recent_gamelogs["dateUTC"].unique()) < 20:
-            recent_gamelogs = gamelogs_df[(gamelogs_df["dateUTC"] < datetime.utcnow())]
+            recent_gamelogs = gamelogs_df
 
         gamelogs_aggregate_df = recent_gamelogs.drop(
             columns=["dateUTC", "playerId", "isActive", "playerTeam.teamId"]

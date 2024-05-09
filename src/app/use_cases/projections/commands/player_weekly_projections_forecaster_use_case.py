@@ -31,7 +31,7 @@ class PlayerWeeklyProjectionsForecasterUseCase:
         week_finish: datetime = week_start + timedelta(days=7)
         players: list[PlayerEntity] = self._player_repository.get_all()
         gamelogs: list[GamelogEntity] = self._gamelog_repository.get_all_between_dates(
-            datetime.utcnow() - timedelta(days=50), datetime.utcnow()
+            datetime.utcnow() - timedelta(days=365), datetime.utcnow()
         )
         if len(gamelogs) > 0:
             matchups: list[ScheduledMatchupEntity] = self._scheduled_matchup_repository.get_matchups_between_dates(
