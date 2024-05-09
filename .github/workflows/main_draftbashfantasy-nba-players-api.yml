@@ -7,7 +7,7 @@ name: Build and deploy Python app to Azure Web App - draftbashfantasy-nba-player
 on:
   push:
     branches:
-      - test
+      - main
   workflow_dispatch:
 
 jobs:
