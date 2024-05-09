@@ -64,8 +64,17 @@ async def upsert_players():
 @players_router.get("/api/v1/testing4")
 async def upsert_players():
     try:
-        gamelogs = gamelog_repository.get_all_between_dates(datetime.utcnow() - timedelta(days=100), datetime.utcnow())
-        return pd.json_normalize([dict(gamelog) for gamelog in gamelogs]).to_dict("records")
+        gamelogs = gamelog_repository.get_all_between_dates(datetime.utcnow() - timedelta(days=30), datetime.utcnow())
+        return len(gamelogs)
+    except Exception as e:
+        return Response(status_code=500, content=str(e))
+
+
+@players_router.get("/api/v1/testing5")
+async def upsert_players():
+    try:
+        gamelogs = gamelog_repository.get_all_between_dates(datetime.utcnow() - timedelta(days=60), datetime.utcnow())
+        return len(gamelogs)
     except Exception as e:
         return Response(status_code=500, content=str(e))
 

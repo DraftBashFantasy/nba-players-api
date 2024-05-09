@@ -14,7 +14,7 @@ weekly_matchups_fetcher = ScheduledMatchupsFetcherService()
 async def get_scheduled_matchups(is_current_week: str = Query(None)):
     get_scheduled_matchups_use_case = GetScheduledMatchupsUseCase(scheduled_matchup_repository)
     scheduled_matchups = []
-    if bool(is_current_week.capitalize()):
+    if bool(is_current_week):
         scheduled_matchups: list[ScheduledMatchupEntity] = get_scheduled_matchups_use_case.get_current_week()
     else:
         scheduled_matchups: list[ScheduledMatchupEntity] = get_scheduled_matchups_use_case.get_all()

@@ -41,8 +41,10 @@ class GamelogRepository(IGamelogRepository):
             {
                 "dateUTC": {
                     "$gte": start_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    "$lt": end_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                }
+                    "$lt": end_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+                },
+                "isRegularSeasonGame": True,
+                "isActive": True
             }
         )
 
