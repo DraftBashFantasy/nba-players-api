@@ -34,6 +34,24 @@ gamelogs_fetcher = GamelogsFetcher()
 player_weekly_projections_forecaster_service = PlayerWeeklyProjectionsForecasterService()
 
 
+@players_router.get("/api/v1/testing1")
+async def upsert_players():
+    try:
+        gamelogs = gamelogs_repository.get_all_between_dates(datetime.utcnow() - timedelta(days=365), datetime.utcnow())
+        return len(gamelogs)
+    except Exception as e:
+        return Response(status_code=500, content=str(e))
+
+
+@players_router.get("/api/v1/testing2")
+async def upsert_players():
+    try:
+        gamelogs = gamelogs_repository.get_all_between_dates(datetime.utcnow() - timedelta(days=60), datetime.utcnow())
+        return len(gamelogs)
+    except Exception as e:
+        return Response(status_code=500, content=str(e))
+
+
 @players_router.post("/api/v1/players")
 async def upsert_players():
     try:

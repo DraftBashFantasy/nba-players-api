@@ -3,13 +3,26 @@ from src.interfaces.repositories import (
     IPlayerRepository,
     IGamelogRepository,
     IScheduledMatchupRepository,
-    IProjectionRepository
+    IProjectionRepository,
 )
 from src.interfaces.projections_model import IPlayerWeeklyProjectionsForecasterService
 from src.domain.entities import ProjectionEntity, PlayerEntity, GamelogEntity, ScheduledMatchupEntity
 
 
 class PlayerWeeklyProjectionsForecasterUseCase:
+    """
+    This class is responsible for forecasting weekly projections, i.e. rebounds, assists, etc., for games a player
+    is scheduled to play in the upcoming week.
+
+    :param player_repository IPlayerRepository: An instance of a player repository implementing its interface
+    :param gamelog_repository IGamelogRepository: An instance of a gamelog repository implementing its interface
+    :param scheduled_matchup_repository IScheduledMatchupRepository: An instance of a scheduled matchup repository 
+        implementing its interface
+    :param projection_repository IProjectionRepository: An instance of a projection repository 
+        implementing its interface
+    :param player_weekly_projections_forecaster_service IPlayerWeeklyProjectionsForecasterService: An instance of a
+        player weekly projections forecaster service implementing its interface
+    """
 
     def __init__(
         self,
